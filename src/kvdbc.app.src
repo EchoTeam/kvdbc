@@ -1,0 +1,12 @@
+{application, kvdbc,
+ [
+  {description, "Key-value database client"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { kvdbc_app, []}},
+  {env, []}
+ ]}.
