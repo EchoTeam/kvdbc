@@ -9,6 +9,11 @@
                  ]},
   {mod, { kvdbc_app, []}},
   {env, [
-    {buckets, [items, kvs, user_actions]}
+    {buckets, [default]},
+	{riak_clusters, [
+		{riakc_default, [
+			{peers, [{'riak@localhost', {"localhost", 8087}}]}
+		]}
+	]}
   ]}
  ]}.

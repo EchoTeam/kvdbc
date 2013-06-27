@@ -17,6 +17,7 @@
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
+
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
@@ -28,7 +29,7 @@ init([]) ->
 riakc_child_specs(Buckets) ->
     lists:map(fun(B) ->
         ProcessName = list_to_atom("riakc_" ++ atom_to_list(B)),
-        { ProcessName, { riakc_cluster_starter, start_link, [ProcessName] },
+        {ProcessName, { riakc_cluster, start_link, [ProcessName] },
             permanent, 10000, worker, [riakc_cluster]}
     end, Buckets).
 
@@ -45,13 +46,13 @@ riakc_child_specs(Buckets) ->
 riakc_child_specs_test_() ->
     [
         fun() ->
-            Result = riakc_child_specs([bucket_name1, bucket_name2]),
+            Result = riakc_child_specs([bucket1, bucket2]),
             Expected = [
-                {riakc_bucket_name1, {riakc_cluster_starter, start_link,
-                    [riakc_bucket_name1]}, permanent,
+                {riakc_bucket1, {riakc_cluster, start_link,
+                    [riakc_bucket1]}, permanent,
                     10000, worker, [riakc_cluster]},
-                {riakc_bucket_name2, {riakc_cluster_starter, start_link,
-                    [riakc_bucket_name2]}, permanent,
+                {riakc_bucket2, {riakc_cluster, start_link,
+                    [riakc_bucket2]}, permanent,
                     10000, worker, [riakc_cluster]}
             ],
             ?assertEqual(Expected, Result)
