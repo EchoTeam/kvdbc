@@ -8,5 +8,7 @@
                   stdlib
                  ]},
   {mod, { kvdbc_app, []}},
-  {env, []}
+  {env, [
+    {buckets, [items, kvs, user_actions]}
+  ]}
  ]}.

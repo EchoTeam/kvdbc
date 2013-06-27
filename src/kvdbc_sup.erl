@@ -1,3 +1,4 @@
+%%% vim: ts=4 sts=4 sw=4 expandtab
 
 -module(kvdbc_sup).
 
@@ -8,9 +9,6 @@
 
 %% Supervisor callbacks
 -export([init/1]).
-
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
 %% ===================================================================
 %% API functions
@@ -24,5 +22,40 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+    {ok, Buckets} = application:get_env(kvdbc, buckets),
+    {ok, { {one_for_one, 5, 10}, riakc_child_specs(Buckets)} }.
 
+riakc_child_specs(Buckets) ->
+    lists:map(fun(B) ->
+        ProcessName = list_to_atom("riakc_" ++ atom_to_list(B)),
+        { ProcessName, { riakc_cluster_starter, start_link, [ProcessName] },
+            permanent, 10000, worker, [riakc_cluster]}
+    end, Buckets).
+
+
+
+
+%% ===================================================================
+%% Tests
+%% ===================================================================
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+riakc_child_specs_test_() ->
+    [
+        fun() ->
+            Result = riakc_child_specs([bucket_name1, bucket_name2]),
+            Expected = [
+                {riakc_bucket_name1, {riakc_cluster_starter, start_link,
+                    [riakc_bucket_name1]}, permanent,
+                    10000, worker, [riakc_cluster]},
+                {riakc_bucket_name2, {riakc_cluster_starter, start_link,
+                    [riakc_bucket_name2]}, permanent,
+                    10000, worker, [riakc_cluster]}
+            ],
+            ?assertEqual(Expected, Result)
+        end
+    ].
+
+-endif.
