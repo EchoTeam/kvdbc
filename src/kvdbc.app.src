@@ -9,11 +9,22 @@
                  ]},
   {mod, { kvdbc_app, []}},
   {env, [
+
+    %% To enable cache, set this to a module with
+    %% an API conformant to the memcached module.
+    %% If this config is missing, then caching is disabled.
+    %% {memcached_module, memcached},
+
+    %% To enable metrics, set this to a module with
+    %% an API conformant to the folsom_metrics module.
+    %% If this config is missing, then no metrics are sent.
+    %% {metrics_module, folsom_metrics},
+
     {buckets, [default]},
-	{riak_clusters, [
-		{riakc_default, [
-			{peers, [{'riak@localhost', {"localhost", 8087}}]}
-		]}
-	]}
+    {riak_clusters, [
+      {riakc_default, [
+        {peers, [{'riak@localhost', {"localhost", 8087}}]}
+      ]}
+    ]}
   ]}
  ]}.
