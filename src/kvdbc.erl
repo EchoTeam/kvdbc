@@ -91,9 +91,9 @@ list_keys(ClusterName, Table, Timeout) -> riakc_cluster:list_keys(ClusterName, T
 % Internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-external_module(ModuleKey, Fun, Args) ->
+external_module_call(ModuleKey, Fun, Args) ->
     case application:get_env(kvdbc, ModuleKey) of
-        {ok, Module} -> Module;
+        {ok, Module} -> erlang:apply(Module, Fun, Args);
         _ -> ignore
     end.
 
