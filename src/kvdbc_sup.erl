@@ -29,7 +29,7 @@ init([]) ->
 riakc_child_specs(Buckets) ->
     lists:map(fun(B) ->
         ProcessName = list_to_atom("riakc_" ++ atom_to_list(B)),
-        {ProcessName, { riakc_cluster, start_link, [ProcessName] },
+        {ProcessName, { riakc_cluster, start_link, [ProcessName, riak_clusters] },
             permanent, 10000, worker, [riakc_cluster]}
     end, Buckets).
 
@@ -49,10 +49,10 @@ riakc_child_specs_test_() ->
             Result = riakc_child_specs([bucket1, bucket2]),
             Expected = [
                 {riakc_bucket1, {riakc_cluster, start_link,
-                    [riakc_bucket1]}, permanent,
+                    [riakc_bucket1, riak_clusters]}, permanent,
                     10000, worker, [riakc_cluster]},
                 {riakc_bucket2, {riakc_cluster, start_link,
-                    [riakc_bucket2]}, permanent,
+                    [riakc_bucket2, riak_clusters]}, permanent,
                     10000, worker, [riakc_cluster]}
             ],
             ?assertEqual(Expected, Result)
