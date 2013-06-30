@@ -13,6 +13,9 @@
         put/4,
         delete/2,
         delete/3,
+        list_buckets/0,
+        list_buckets/1,
+        list_buckets/2,
         list_keys/1,
         list_keys/2,
         list_keys/3
@@ -79,6 +82,15 @@ list_keys(ClusterName, Table) ->
 list_keys(ClusterName, Table, Timeout) ->
     RClusterName = riakc_cluster_name(ClusterName),
     riakc_cluster:list_keys(RClusterName, Table, Timeout).
+
+list_buckets() ->
+    list_buckets(?DEFAULT_CLUSTER).
+list_buckets(ClusterName) ->
+    RClusterName = riakc_cluster_name(ClusterName),
+    riakc_cluster:list_buckets(RClusterName).
+list_buckets(ClusterName, Timeout) ->
+    RClusterName = riakc_cluster_name(ClusterName),
+    riakc_cluster:list_buckets(RClusterName, Timeout).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
