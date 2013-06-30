@@ -9,13 +9,10 @@
 -export([
         get/2,
         get/3,
-        get/4,
         put/3,
         put/4,
-        put/5,
         delete/2,
         delete/3,
-        delete/4,
         list_keys/1,
         list_keys/2,
         list_keys/3
@@ -24,18 +21,15 @@
 -define(DEFAULT_CLUSTER, default).
 -define(CACHE_KEY_EXPIRATION, 5 * 60). % in seconds
 
--spec put(ClusterName :: atom(),Table :: binary(),Key::term(),Value::term(),Options::[proplists:property()]) ->  ok | {ok, term()} | {error, term()}.
+% TODO: improve specs
+-spec put(ClusterName :: atom(),Table :: binary(),Key::term(),Value::term()) ->  ok | {ok, term()} | {error, term()}.
 
 put(Table, Key, Value) ->
-    put(?DEFAULT_CLUSTER, Table, Key, Value, []).
-put(Table, Key, Value, Options) when is_binary(Table) ->
-    put(?DEFAULT_CLUSTER, Table, Key, Value, Options);
+    put(?DEFAULT_CLUSTER, Table, Key, Value).
 put(ClusterName, Table, Key, Value) ->
-    put(ClusterName, Table, Key, Value, []).
-put(ClusterName, Table, Key, Value, Options) ->
     RClusterName = riakc_cluster_name(ClusterName),
     count(RClusterName, put),
-    PutResponse =  riakc_cluster:put(RClusterName, Table,Key,Value,Options),
+    PutResponse =  riakc_cluster:put(RClusterName, Table, Key, Value, [{w, 2}]),
     case PutResponse of
         ok       -> set_cached_value(mcd_key(RClusterName,Table,Key), Value);
         {ok,_}   -> set_cached_value(mcd_key(RClusterName,Table,Key), Value);
@@ -45,14 +39,10 @@ put(ClusterName, Table, Key, Value, Options) ->
 
 
 
--spec get(ClusterName :: atom(), Table :: binary(),Key::term(),Options::[proplists:property()]) -> {ok,term()} | {error,term()}.
+-spec get(ClusterName :: atom(), Table :: binary(),Key::term()) -> {ok,term()} | {error,term()}.
 get(Table, Key) ->
-    get(?DEFAULT_CLUSTER, Table, Key, []).
-get(Table, Key, Options) when is_binary(Table) ->
-    get(?DEFAULT_CLUSTER, Table, Key, Options);
-get(ClusterName, Table, Key) ->
-    get(ClusterName, Table, Key, []).
-get(ClusterName, Table, Key, Options) -> 
+    get(?DEFAULT_CLUSTER, Table, Key).
+get(ClusterName, Table, Key) -> 
     RClusterName = riakc_cluster_name(ClusterName),
     MCDKey = mcd_key(RClusterName, Table, Key),
     case get_cached_value(MCDKey) of
@@ -61,7 +51,7 @@ get(ClusterName, Table, Key, Options) ->
             {ok,CachedValue};  %% returns cached value
         _ ->  
             count(RClusterName, get),
-            GetResponse =  riakc_cluster:get(RClusterName,Table,Key,Options),
+            GetResponse =  riakc_cluster:get(RClusterName, Table, Key, [{r, 2}]),
             case GetResponse of
                 {ok, Value} -> set_cached_value(MCDKey, Value);
                 _   -> no_dice
@@ -69,17 +59,13 @@ get(ClusterName, Table, Key, Options) ->
             GetResponse  %% returns result of riak get operation 
     end.
 
--spec delete(ClusterName :: atom(),Table ::binary(),Key::term(),Options::[proplists:property()]) -> ok | {error, term()}.
+-spec delete(ClusterName :: atom(),Table ::binary(),Key::term()) -> ok | {error, term()}.
 delete(Table, Key) ->
-    delete(?DEFAULT_CLUSTER, Table, Key, []).
-delete(Table, Key, Options) when is_binary(Table) ->
-    delete(?DEFAULT_CLUSTER, Table, Key, Options);
+    delete(?DEFAULT_CLUSTER, Table, Key).
 delete(ClusterName, Table, Key) ->
-    delete(ClusterName, Table, Key, []).
-delete(ClusterName, Table, Key, Options) ->
     RClusterName = riakc_cluster_name(ClusterName),
     count(RClusterName, delete),
-    DelResponse = riakc_cluster:delete(RClusterName,Table, Key, Options),
+    DelResponse = riakc_cluster:delete(RClusterName,Table, Key, [{rw, 2}]),
     case DelResponse  of
         ok -> delete_cached_value(mcd_key(RClusterName, Table, Key));
         _ ->  no_dice
