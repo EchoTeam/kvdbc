@@ -118,7 +118,7 @@ delete_cached_value(MCDKey) ->
 count(RClusterName, Op) ->
     CounterName = ["riakc.", atom_to_list(RClusterName), ".",
         atom_to_list(Op), ".r.all"],
-    external_module_call(metrics_module, notify,
+    external_module_call(metrics_module, safely_notify,
         [iolist_to_binary(CounterName), {inc, 1}]),
     ok.
 
