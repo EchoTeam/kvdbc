@@ -15,112 +15,53 @@
         delete/3,
         list_buckets/0,
         list_buckets/1,
-        list_buckets/2,
         list_keys/1,
-        list_keys/2,
-        list_keys/3
+        list_keys/2
     ]).
 
--define(DEFAULT_CLUSTER, default).
--define(CACHE_KEY_EXPIRATION, 5 * 60). % in seconds
+-define(DEFAULT_BACKEND_INSTANCE, default).
 
 % TODO: improve specs
--spec put(ClusterName :: atom(),Table :: binary(),Key::term(),Value::term()) ->  ok | {ok, term()} | {error, term()}.
+-spec put(BackendName :: atom(),Table :: binary(),Key::term(),Value::term()) ->  ok | {ok, term()} | {error, term()}.
 
 put(Table, Key, Value) ->
-    put(?DEFAULT_CLUSTER, Table, Key, Value).
-put(ClusterName, Table, Key, Value) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    count(RClusterName, put),
-    PutResponse =  riakc_cluster:put(RClusterName, Table, Key, Value, [{w, 2}]),
-    case PutResponse of
-        ok       -> set_cached_value(mcd_key(RClusterName,Table,Key), Value);
-        {ok,_}   -> set_cached_value(mcd_key(RClusterName,Table,Key), Value);
-        _ -> no_dice
-    end,
-    PutResponse.  %% We return result of riak put  operation in any case
+    put(?DEFAULT_BACKEND_INSTANCE, Table, Key, Value).
+put(BackendName, Table, Key, Value) ->
+    ProcessName = process_name(BackendName),
+    kvdbc_backend:put(ProcessName, Table, Key, Value).
 
 
 
--spec get(ClusterName :: atom(), Table :: binary(),Key::term()) -> {ok,term()} | {error,term()}.
+-spec get(BackendName :: atom(), Table :: binary(),Key::term()) -> {ok,term()} | {error,term()}.
 get(Table, Key) ->
-    get(?DEFAULT_CLUSTER, Table, Key).
-get(ClusterName, Table, Key) -> 
-    RClusterName = riakc_cluster_name(ClusterName),
-    MCDKey = mcd_key(RClusterName, Table, Key),
-    case get_cached_value(MCDKey) of
-        {ok, CachedValue} ->
-            count(RClusterName, get_cached),
-            {ok,CachedValue};  %% returns cached value
-        _ ->  
-            count(RClusterName, get),
-            GetResponse =  riakc_cluster:get(RClusterName, Table, Key, [{r, 2}]),
-            case GetResponse of
-                {ok, Value} -> set_cached_value(MCDKey, Value);
-                _   -> no_dice
-            end,
-            GetResponse  %% returns result of riak get operation 
-    end.
+    get(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+get(BackendName, Table, Key) -> 
+    ProcessName = process_name(BackendName),
+    kvdbc_backend:get(ProcessName, Table, Key).
 
--spec delete(ClusterName :: atom(),Table ::binary(),Key::term()) -> ok | {error, term()}.
+-spec delete(BackendName :: atom(),Table ::binary(),Key::term()) -> ok | {error, term()}.
 delete(Table, Key) ->
-    delete(?DEFAULT_CLUSTER, Table, Key).
-delete(ClusterName, Table, Key) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    count(RClusterName, delete),
-    DelResponse = riakc_cluster:delete(RClusterName,Table, Key, [{rw, 2}]),
-    case DelResponse  of
-        ok -> delete_cached_value(mcd_key(RClusterName, Table, Key));
-        _ ->  no_dice
-    end,
-    DelResponse.  %% We return result of riak del opration in any case
+    delete(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+delete(BackendName, Table, Key) ->
+    ProcessName = process_name(BackendName),
+    kvdbc_backend:delete(ProcessName, Table, Key).
 
-list_keys(Table) -> list_keys(?DEFAULT_CLUSTER, Table).
-list_keys(ClusterName, Table) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    riakc_cluster:list_keys(RClusterName, Table).
-list_keys(ClusterName, Table, Timeout) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    riakc_cluster:list_keys(RClusterName, Table, Timeout).
+list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
+list_keys(BackendName, Table) ->
+    ProcessName = process_name(BackendName),
+    kvdbc_backend:list_keys(ProcessName, Table).
 
 list_buckets() ->
-    list_buckets(?DEFAULT_CLUSTER).
-list_buckets(ClusterName) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    riakc_cluster:list_buckets(RClusterName).
-list_buckets(ClusterName, Timeout) ->
-    RClusterName = riakc_cluster_name(ClusterName),
-    riakc_cluster:list_buckets(RClusterName, Timeout).
+    list_buckets(?DEFAULT_BACKEND_INSTANCE).
+list_buckets(BackendName) ->
+    ProcessName = process_name(BackendName),
+    kvdbc_backend:list_buckets(ProcessName).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-external_module_call(ModuleKey, Fun, Args) ->
-    case application:get_env(kvdbc, ModuleKey) of
-        {ok, Module} -> erlang:apply(Module, Fun, Args);
-        _ -> ignore
-    end.
-
-mcd_key(ProcName, Table, Key) ->
-    {?MODULE, ProcName, Table, Key}.
-
-get_cached_value(MCDKey) ->
-    external_module_call(memcached_module, do, [mb_riak_cache, get, MCDKey]).
-
-set_cached_value(MCDKey, Value) ->
-    external_module_call(memcached_module, do,
-        [mb_riak_cache, {set, 0, ?CACHE_KEY_EXPIRATION}, MCDKey, Value]).
-
-delete_cached_value(MCDKey) ->
-    external_module_call(memcached_module, do, [mb_riak_cache, delete, MCDKey]).
-
-count(RClusterName, Op) ->
-    CounterName = ["riakc.", atom_to_list(RClusterName), ".",
-        atom_to_list(Op), ".r.all"],
-    external_module_call(metrics_module, safely_notify,
-        [iolist_to_binary(CounterName), {inc, 1}]),
-    ok.
-
-riakc_cluster_name(ClusterName) ->
-    list_to_atom("riakc_" ++ atom_to_list(ClusterName)).
+process_name(BackendName) ->
+    {ok, Instances} = application:get_env(kvdbc, backend_instances),
+    Options = proplists:get_value(BackendName, Instances),
+    proplists:get_value(process_name, Options).
