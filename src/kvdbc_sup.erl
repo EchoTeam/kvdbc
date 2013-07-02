@@ -23,7 +23,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, BInstances} = application:get_env(kvdbc, backend_instances),
+    BInstances = kvdbc_cfg:backends(),
     {ok, { {one_for_one, 5, 10}, backend_instance_specs(BInstances)} }.
 
 backend_instance_specs(BInstances) ->
