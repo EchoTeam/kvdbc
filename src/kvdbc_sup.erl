@@ -27,10 +27,10 @@ init([]) ->
     {ok, { {one_for_one, 5, 10}, backend_instance_specs(BInstances)} }.
 
 backend_instance_specs(BInstances) ->
-    lists:map(fun({_Name, Options}) ->
-        [Module, ProcessName, Config] = [proplists:get_value(K, Options) ||
-            K <- [callback_module, process_name, config]],
-        {ProcessName, { Module, start_link, [ProcessName, Config] },
+    lists:map(fun({Name, Options}) ->
+        [Module, ProcessName] = [proplists:get_value(K, Options) ||
+            K <- [callback_module, process_name]],
+        {ProcessName, { Module, start_link, [ProcessName, Name] },
             permanent, 10000, worker, [Module]}
     end, BInstances).
 
@@ -65,12 +65,10 @@ backend_instance_specs_test_() ->
             ],
             Result = backend_instance_specs(Instances),
             Expected = [
-                {process1, {module1, start_link,
-                    [process1, [{k1, v1}]]}, permanent,
-                    10000, worker, [module1]},
-                {process2, {module2, start_link,
-                    [process2, [{k2, v2}]]}, permanent,
-                    10000, worker, [module2]}
+                {process1, {module1, start_link, [process1, instance1]},
+                    permanent, 10000, worker, [module1]},
+                {process2, {module2, start_link, [process2, instance2]},
+                    permanent, 10000, worker, [module2]}
             ],
             ?assertEqual(Expected, Result)
         end

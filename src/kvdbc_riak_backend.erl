@@ -15,7 +15,8 @@
     list_keys/2
 ]).
 
-start_link(ProcessName, Config) ->
+start_link(ProcessName, BackendName) ->
+    Config = kvdbc_cfg:backend_val(BackendName, config),
     riakc_cluster:start_link(ProcessName, Config).
 
 put(ProcessName, Table, Key, Value) ->
