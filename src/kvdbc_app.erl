@@ -33,7 +33,8 @@ config_mod_spec(Config) ->
     ]),
     [
         ["-module(kvdbc_cfg).\n"],
-        ["-export([backend_val/2]).\n"],
+        ["-export([backends/0, backend_val/2]).\n"],
+        ["backends() -> ", io_lib:format("~p", [Config]), ".\n"],
         [string:join(Vals, ";\n"), "."]
     ].
 
@@ -65,21 +66,25 @@ config_mod_spec_test_() ->
               ]}
             ],
             ResultSpec = config_mod_spec(Instances),
-            ExpectedSpec = 
-                <<"-module(kvdbc_cfg).\n"
-                "-export([backend_val/2]).\n"
+            ExpectedSpec = [
+                "-module(kvdbc_cfg).\n"
+                "-export([backends/0, backend_val/2]).\n"
+                "backends() -> ", io_lib:format("~p", [Instances]), ".\n",
                 "backend_val(instance1, callback_module) -> module1;\n"
                 "backend_val(instance1, process_name) -> process1;\n"
                 "backend_val(instance1, config) -> [{k1,v1}];\n"
                 "backend_val(instance2, callback_module) -> module2;\n"
                 "backend_val(instance2, process_name) -> process2;\n"
-                "backend_val(instance2, config) -> [{k2,v2}].">>,
+                "backend_val(instance2, config) -> [{k2,v2}]."
+            ],
 
             ?debugFmt("ExpectedSpec:~n~s", [ExpectedSpec]),
             ?debugFmt("ResultSpec:~n~s", [ResultSpec]),
 
-            ?assertEqual(ExpectedSpec, iolist_to_binary(ResultSpec)),
-            ?assertEqual({module, kvdbc_cfg}, mod_gen:go(ResultSpec)),
+            ?assertEqual(iolist_to_binary(ExpectedSpec),
+                iolist_to_binary(ResultSpec)),
+            ?assertEqual({module, kvdbc_cfg},
+                mod_gen:go(ResultSpec)),
             ?assertEqual(module1,
                 kvdbc_cfg:backend_val(instance1, callback_module))
         end

@@ -17,7 +17,7 @@
 
     {backend_instances, [
       {default, [
-        {callback_module, riakc_cluster},
+        {callback_module, kvdbc_riak_backend},
         {process_name, riakc_default},
         {config, [
           {peers, [{'riak@localhost', {"localhost", 8087}}]}
