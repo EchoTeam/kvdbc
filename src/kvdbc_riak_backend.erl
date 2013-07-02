@@ -7,7 +7,7 @@
 -behaviour(kvdbc_backend).
 
 -export([
-    start_link/1,
+    start_link/2,
     get/3,
     put/4,
     delete/3,
@@ -15,27 +15,20 @@
     list_keys/2
 ]).
 
-start_link(BackendName) ->
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
-    Config = kvdbc_cfg:val(BackendName, config),
+start_link(ProcessName, Config) ->
     riakc_cluster:start_link(ProcessName, Config).
 
-put(BackendName, Table, Key, Value) ->
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
+put(ProcessName, Table, Key, Value) ->
     riakc_cluster:put(ProcessName, Table, Key, Value, [{w, 2}]).
 
-get(BackendName, Table, Key) -> 
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
+get(ProcessName, Table, Key) -> 
     riakc_cluster:get(ProcessName, Table, Key, [{r, 2}]).
 
-delete(BackendName, Table, Key) ->
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
+delete(ProcessName, Table, Key) ->
     riakc_cluster:delete(ProcessName, Table, Key, [{rw, 2}]).
 
-list_keys(BackendName, Table) ->
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
+list_keys(ProcessName, Table) ->
     riakc_cluster:list_keys(ProcessName, Table).
 
-list_buckets(BackendName) ->
-    ProcessName = kvdbc_cfg:val(BackendName, process_name),
+list_buckets(ProcessName) ->
     riakc_cluster:list_buckets(ProcessName).

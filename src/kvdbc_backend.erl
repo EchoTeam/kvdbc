@@ -3,7 +3,7 @@
 
 behaviour_info(callbacks) ->
     [
-		{start_link, 1},
+		{start_link, 2},
 		{get, 3},
 		{put, 4},
 		{delete, 3},
