@@ -15,21 +15,51 @@
     list_keys/3
 ]).
 
+-define(CACHE_KEY_EXPIRATION, 2*60). % 2 min
+
 start_link(BackendName, ProcessName) ->
     Mod = module_name(BackendName),
     Mod:start_link(BackendName, ProcessName).
 
 put(BackendName, ProcessName, Table, Key, Value) ->
+    count(ProcessName, put),
     Mod = module_name(BackendName),
-    Mod:put(BackendName, ProcessName, Table, Key, Value).
+    PutResponse = Mod:put(BackendName, ProcessName, Table, Key, Value),
+    case PutResponse of
+        ok ->
+            set_cached_value(BackendName, mcd_key(ProcessName,Table,Key), Value);
+        {ok, _} ->
+            set_cached_value(BackendName, mcd_key(ProcessName,Table,Key), Value);
+        _ -> no_dice
+    end,
+    PutResponse.
 
 get(BackendName, ProcessName, Table, Key) -> 
-    Mod = module_name(BackendName),
-    Mod:get(BackendName, ProcessName, Table, Key).
+    MCDKey = mcd_key(ProcessName, Table, Key),
+    case get_cached_value(BackendName, MCDKey) of
+        {ok, CachedValue} ->
+            count(ProcessName, get_cached),
+            {ok,CachedValue};  %% returns cached value
+        _ ->  
+            count(ProcessName, get),
+            Mod = module_name(BackendName),
+            GetResponse = Mod:get(BackendName, ProcessName, Table, Key),
+            case GetResponse of
+                {ok, Value} -> set_cached_value(BackendName, MCDKey, Value);
+                _   -> no_dice
+            end,
+            GetResponse
+    end.
 
 delete(BackendName, ProcessName, Table, Key) ->
+    count(ProcessName, delete),
     Mod = module_name(BackendName),
-    Mod:delete(BackendName, ProcessName, Table, Key).
+    DelResponse = Mod:delete(BackendName, ProcessName, Table, Key),
+    case DelResponse  of
+        ok -> delete_cached_value(BackendName, mcd_key(ProcessName, Table, Key));
+        _ ->  no_dice
+    end,
+    DelResponse.  %% We return result of riak del opration in any case
 
 list_keys(BackendName, ProcessName, Table) ->
     Mod = module_name(BackendName),
@@ -46,3 +76,27 @@ list_buckets(BackendName, ProcessName) ->
 module_name(BackendName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
     proplists:get_value(wrapped_backend_module, Config).
+
+cache_module(BackendName) ->
+    Config = kvdbc_cfg:backend_val(BackendName, config),
+    proplists:get_value(cache_module, Config).
+
+mcd_key(ProcName, Table, Key) ->
+    {?MODULE, ProcName, Table, Key}.
+
+get_cached_value(BackendName, MCDKey) ->
+    Mod = cache_module(BackendName),
+    Mod:do(mb_riak_cache, get, MCDKey).
+
+set_cached_value(BackendName, MCDKey, Value) ->
+    Mod = cache_module(BackendName),
+    Mod:do(mb_riak_cache, {set, 0, ?CACHE_KEY_EXPIRATION}, MCDKey, Value).
+
+delete_cached_value(BackendName, MCDKey) ->
+    Mod = cache_module(BackendName),
+    Mod:do(mb_riak_cache, delete, MCDKey).
+
+count(ProcessName, Op) ->
+    CounterName = "riakc." ++ atom_to_list(ProcessName) ++ "." ++ atom_to_list(Op),
+    %server_stats:seen_domain(<<".">>, list_to_binary(CounterName), $r).
+    ok.
