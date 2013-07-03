@@ -20,40 +20,58 @@
 
 -define(DEFAULT_BACKEND_INSTANCE, default).
 
-% TODO: improve specs
--spec put(BackendName :: atom(),Table :: binary(),Key::term(),Value::term()) ->  ok | {ok, term()} | {error, term()}.
-
+-spec put(Table::binary(), Key::term(), Value::term()) ->
+    ok | {error, term()}.
 put(Table, Key, Value) ->
     put(?DEFAULT_BACKEND_INSTANCE, Table, Key, Value).
+
+-spec put(BackendName::atom(), Table::binary(), Key::term(), Value::term()) ->
+    ok | {error, term()}.
 put(BackendName, Table, Key, Value) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
     Mod:put(ProcessName, Table, Key, Value).
 
--spec get(BackendName :: atom(), Table :: binary(),Key::term()) -> {ok,term()} | {error,term()}.
+-spec get(Table::binary(), Key::term()) ->
+    {ok, term()} | {error, term()}.
 get(Table, Key) ->
     get(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+
+-spec get(BackendName::atom(), Table::binary(), Key::term()) ->
+    {ok, term()} | {error, term()}.
 get(BackendName, Table, Key) -> 
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
     Mod:get(ProcessName, Table, Key).
 
--spec delete(BackendName :: atom(),Table ::binary(),Key::term()) -> ok | {error, term()}.
+-spec delete(Table::binary(), Key::term()) ->
+    ok | {error, term()}.
 delete(Table, Key) ->
     delete(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+
+-spec delete(BackendName::atom(), Table::binary(), Key::term()) ->
+    ok | {error, term()}.
 delete(BackendName, Table, Key) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
     Mod:delete(ProcessName, Table, Key).
 
+-spec list_keys(Table::binary()) -> {ok, [binary()]} | {error, term()}.
 list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
+
+-spec list_keys(BackendName::atom(), Table::binary()) ->
+    {ok, [binary()]} | {error, term()}.
 list_keys(BackendName, Table) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
     Mod:list_keys(ProcessName, Table).
 
+-spec list_buckets() -> {ok, [binary()]} | {error, term()}.
 list_buckets() ->
     list_buckets(?DEFAULT_BACKEND_INSTANCE).
+
+-spec list_buckets(BackendName::atom()) ->
+    {ok, [binary()]} | {error, term()}.
 list_buckets(BackendName) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
