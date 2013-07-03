@@ -3,12 +3,12 @@
 
 behaviour_info(callbacks) ->
     [
-		{start_link, 2},
-		{get, 3},
-		{put, 4},
-		{delete, 3},
-		{list_buckets, 1},
-		{list_keys, 2}
-	];
+        {start_link, 2},
+        {get, 4},
+        {put, 5},
+        {delete, 4},
+        {list_buckets, 2},
+        {list_keys, 3}
+    ];
 behaviour_info(_) ->
     undefined.

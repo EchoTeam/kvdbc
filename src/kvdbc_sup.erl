@@ -30,7 +30,7 @@ backend_instance_specs(BInstances) ->
     lists:map(fun({Name, Options}) ->
         [Module, ProcessName] = [proplists:get_value(K, Options) ||
             K <- [callback_module, process_name]],
-        {ProcessName, { Module, start_link, [ProcessName, Name] },
+        {ProcessName, { Module, start_link, [Name, ProcessName] },
             permanent, 10000, worker, [Module]}
     end, BInstances).
 
@@ -65,9 +65,9 @@ backend_instance_specs_test_() ->
             ],
             Result = backend_instance_specs(Instances),
             Expected = [
-                {process1, {module1, start_link, [process1, instance1]},
+                {process1, {module1, start_link, [instance1, process1]},
                     permanent, 10000, worker, [module1]},
-                {process2, {module2, start_link, [process2, instance2]},
+                {process2, {module2, start_link, [instance2, process2]},
                     permanent, 10000, worker, [module2]}
             ],
             ?assertEqual(Expected, Result)

@@ -30,7 +30,7 @@ put(Table, Key, Value) ->
 put(BackendName, Table, Key, Value) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
-    Mod:put(ProcessName, Table, Key, Value).
+    Mod:put(BackendName, ProcessName, Table, Key, Value).
 
 -spec get(Table::binary(), Key::term()) ->
     {ok, term()} | {error, term()}.
@@ -42,7 +42,7 @@ get(Table, Key) ->
 get(BackendName, Table, Key) -> 
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
-    Mod:get(ProcessName, Table, Key).
+    Mod:get(BackendName, ProcessName, Table, Key).
 
 -spec delete(Table::binary(), Key::term()) ->
     ok | {error, term()}.
@@ -54,7 +54,7 @@ delete(Table, Key) ->
 delete(BackendName, Table, Key) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
-    Mod:delete(ProcessName, Table, Key).
+    Mod:delete(BackendName, ProcessName, Table, Key).
 
 -spec list_keys(Table::binary()) -> {ok, [binary()]} | {error, term()}.
 list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
@@ -64,7 +64,7 @@ list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
 list_keys(BackendName, Table) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
-    Mod:list_keys(ProcessName, Table).
+    Mod:list_keys(BackendName, ProcessName, Table).
 
 -spec list_buckets() -> {ok, [binary()]} | {error, term()}.
 list_buckets() ->
@@ -75,7 +75,7 @@ list_buckets() ->
 list_buckets(BackendName) ->
     ProcessName = process_name(BackendName),
     Mod = module_name(BackendName),
-    Mod:list_buckets(ProcessName).
+    Mod:list_buckets(BackendName, ProcessName).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
