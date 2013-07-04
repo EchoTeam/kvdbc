@@ -92,30 +92,34 @@ backend_cached_test(_Config) ->
     application:load(application_spec_cached()),
     ok = application:start(kvdbc),
 
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.put">>),
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.delete">>),
+    Counter = fun(Name) ->
+        {<<".">>, list_to_binary("riakc.riakc_default." ++ Name), $r}
+    end,
+
+    0 = metrics_mock:get_metric(Counter("get")),
+    0 = metrics_mock:get_metric(Counter("get_cached")),
+    0 = metrics_mock:get_metric(Counter("put")),
+    0 = metrics_mock:get_metric(Counter("delete")),
 
     Key = list_to_binary(test_utils:unique_string()),
     Value = list_to_binary(test_utils:unique_string()),
 
     ok = kvdbc:put(cached, <<"test_bucket">>, Key, Value),
-    1 = metrics_mock:get_metric(<<"riakc.riakc_default.put">>),
+    1 = metrics_mock:get_metric(Counter("put")),
 
     {ok, Value} = kvdbc:get(cached, <<"test_bucket">>, Key),
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
-    1 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
+    0 = metrics_mock:get_metric(Counter("get")),
+    1 = metrics_mock:get_metric(Counter("get_cached")),
 
     {ok, Value} = kvdbc:get(cached, <<"test_bucket">>, Key),
-    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
-    2 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
+    0 = metrics_mock:get_metric(Counter("get")),
+    2 = metrics_mock:get_metric(Counter("get_cached")),
 
     ok = kvdbc:delete(cached, <<"test_bucket">>, Key),
-    1 = metrics_mock:get_metric(<<"riakc.riakc_default.delete">>),
+    1 = metrics_mock:get_metric(Counter("delete")),
 
     {error, notfound} = kvdbc:get(cached, <<"test_bucket">>, Key),
-    1 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
+    1 = metrics_mock:get_metric(Counter("get")),
 
     ok = application:stop(kvdbc),
     application:unload(kvdbc).

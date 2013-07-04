@@ -1,7 +1,7 @@
 -module(metrics_mock).
--export([safely_notify/2, get_metric/1]).
+-export([safely_notify/3, get_metric/1]).
 
-safely_notify(CounterName, {inc, 1}) ->
+safely_notify(CounterName, 1, meter) ->
 	V = get_metric(CounterName),
 	put(CounterName, V + 1).
 
