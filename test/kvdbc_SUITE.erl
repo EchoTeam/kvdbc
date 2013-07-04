@@ -50,7 +50,7 @@ application_spec_cached() ->
             {callback_module, kvdbc_cached_backend},
             {process_name, riakc_default},
             {config, [
-              {cache_module, memcached_mock},
+              {cache_module, {memcached_mock, mb_riak_cache}},
               {wrapped_backend_module, kvdbc_riak_backend},
               {peers, [{'riak@localhost', {"localhost", 8087}}]}
             ]}

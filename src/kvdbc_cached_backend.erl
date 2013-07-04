@@ -85,16 +85,16 @@ mcd_key(ProcName, Table, Key) ->
     {?MODULE, ProcName, Table, Key}.
 
 get_cached_value(BackendName, MCDKey) ->
-    Mod = cache_module(BackendName),
-    Mod:do(mb_riak_cache, get, MCDKey).
+    {Mod, ServerRef} = cache_module(BackendName),
+    Mod:do(ServerRef, get, MCDKey).
 
 set_cached_value(BackendName, MCDKey, Value) ->
-    Mod = cache_module(BackendName),
-    Mod:do(mb_riak_cache, {set, 0, ?CACHE_KEY_EXPIRATION}, MCDKey, Value).
+    {Mod, ServerRef} = cache_module(BackendName),
+    Mod:do(ServerRef, {set, 0, ?CACHE_KEY_EXPIRATION}, MCDKey, Value).
 
 delete_cached_value(BackendName, MCDKey) ->
-    Mod = cache_module(BackendName),
-    Mod:do(mb_riak_cache, delete, MCDKey).
+    {Mod, ServerRef} = cache_module(BackendName),
+    Mod:do(ServerRef, delete, MCDKey).
 
 count(ProcessName, Op) ->
     case kvdbc_cfg:metrics_module() of
