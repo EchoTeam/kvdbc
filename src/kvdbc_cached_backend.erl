@@ -100,6 +100,6 @@ count(ProcessName, Op) ->
     case kvdbc_cfg:metrics_module() of
         undefined -> nop;
         Mod ->
-            CounterName = "riakc." ++ atom_to_list(ProcessName) ++ "." ++ atom_to_list(Op),
-            Mod:safely_notify(list_to_binary(CounterName), {inc, 1})
+            CounterName = {<<".">>, list_to_binary("riakc." ++ atom_to_list(ProcessName) ++ "." ++ atom_to_list(Op)), $r},
+            Mod:safely_notify(CounterName, 1, meter)
     end.
