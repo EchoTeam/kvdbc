@@ -2,3 +2,5 @@ ebin
 .eunit
 *~
 /deps
+/logs
+*.beam
