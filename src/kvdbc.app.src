@@ -23,6 +23,17 @@
           {peers, [{'riak@localhost', {"localhost", 8087}}]}
         ]}
       ]}
+
+      %% Example of caching backend
+	  %% ,{cached, [
+	  %%   {callback_module, kvdbc_cached_backend},
+	  %%   {process_name, riakc_default},
+	  %%   {config, [
+	  %%     {cache_module, memcached_mock},
+	  %%     {wrapped_backend_module, kvdbc_riak_backend},
+	  %%     {peers, [{'riak@localhost', {"localhost", 8087}}]}
+	  %%   ]}
+	  %% ]}
     ]}
 
   ]}

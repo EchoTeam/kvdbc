@@ -4,6 +4,10 @@
 	do/4
 ]).
 
-do(_, get, _Key) -> undefined;
-do(_, delete, _Key) -> ok.
-do(_, {set, _, _}, _Key, _Val) -> ok.
+do(_, get, Key) ->
+	case get(Key) of
+		undefined -> {error, notfound};
+		V -> {ok, V}
+	end;
+do(_, delete, Key) -> erase(Key).
+do(_, {set, _, _}, Key, Val) -> put(Key, Val).

@@ -19,23 +19,26 @@ stop(_State) ->
     ok.
     
 load_config() ->
-    {ok, BInstances} = application:get_env(kvdbc, backend_instances),
-    Spec = config_mod_spec(BInstances),
+    Config = application:get_all_env(kvdbc),
+    Spec = config_mod_spec(Config),
     mod_gen:go(Spec).
 
 config_mod_spec(Config) ->
-    Vals = lists:umerge([
+    BInstances = proplists:get_value(backend_instances, Config),
+    MetricsModule = proplists:get_value(metrics_module, Config),
+    BVals = lists:umerge([
         [
             lists:flatten(io_lib:format("backend_val(~s, ~s) -> ~p", [I, K, V]))
             || {K, V} <- Opts
         ]
-        || {I, Opts} <- Config
+        || {I, Opts} <- BInstances
     ]),
     [
         ["-module(kvdbc_cfg).\n"],
-        ["-export([backends/0, backend_val/2]).\n"],
-        ["backends() -> ", io_lib:format("~p", [Config]), ".\n"],
-        [string:join(Vals, ";\n"), "."]
+        ["-export([metrics_module/0, backends/0, backend_val/2]).\n"],
+        ["metrics_module() -> ", io_lib:format("~p", [MetricsModule]), ".\n"],
+        ["backends() -> ", io_lib:format("~p", [BInstances]), ".\n"],
+        [string:join(BVals, ";\n"), "."]
     ].
 
 
@@ -49,26 +52,31 @@ config_mod_spec(Config) ->
 config_mod_spec_test_() ->
     [
         fun() ->
-            Instances = [
-              {instance1, [
-                {callback_module, module1},
-                {process_name, process1},
-                {config, [
-                  {k1, v1}
+            Config = [
+              {metrics_module, folsom_metrics},
+              {backend_instances, [
+                  {instance1, [
+                    {callback_module, module1},
+                    {process_name, process1},
+                    {config, [
+                      {k1, v1}
+                    ]}
+                  ]},
+                  {instance2, [
+                    {callback_module, module2},
+                    {process_name, process2},
+                    {config, [
+                      {k2, v2}
+                    ]}
+                  ]}
                 ]}
-              ]},
-              {instance2, [
-                {callback_module, module2},
-                {process_name, process2},
-                {config, [
-                  {k2, v2}
-                ]}
-              ]}
             ],
-            ResultSpec = config_mod_spec(Instances),
+            Instances = proplists:get_value(backend_instances, Config),
+            ResultSpec = config_mod_spec(Config),
             ExpectedSpec = [
                 "-module(kvdbc_cfg).\n"
-                "-export([backends/0, backend_val/2]).\n"
+                "-export([metrics_module/0, backends/0, backend_val/2]).\n"
+                "metrics_module() -> folsom_metrics.\n",
                 "backends() -> ", io_lib:format("~p", [Instances]), ".\n",
                 "backend_val(instance1, callback_module) -> module1;\n"
                 "backend_val(instance1, process_name) -> process1;\n"

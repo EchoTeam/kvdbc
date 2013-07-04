@@ -97,6 +97,9 @@ delete_cached_value(BackendName, MCDKey) ->
     Mod:do(mb_riak_cache, delete, MCDKey).
 
 count(ProcessName, Op) ->
-    CounterName = "riakc." ++ atom_to_list(ProcessName) ++ "." ++ atom_to_list(Op),
-    %server_stats:seen_domain(<<".">>, list_to_binary(CounterName), $r).
-    ok.
+    case kvdbc_cfg:metrics_module() of
+        undefined -> nop;
+        Mod ->
+            CounterName = "riakc." ++ atom_to_list(ProcessName) ++ "." ++ atom_to_list(Op),
+            Mod:safely_notify(list_to_binary(CounterName), {inc, 1})
+    end.

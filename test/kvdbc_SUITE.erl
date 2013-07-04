@@ -44,6 +44,7 @@ application_spec_cached() ->
       {applications, [kernel, stdlib]},
       {mod, { kvdbc_app, []}},
       {env, [
+        {metrics_module, metrics_mock},
         {backend_instances, [
           {cached, [
             {callback_module, kvdbc_cached_backend},
@@ -90,11 +91,31 @@ start_app_cached_test(_Config) ->
 backend_cached_test(_Config) ->
     application:load(application_spec_cached()),
     ok = application:start(kvdbc),
+
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.put">>),
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.delete">>),
+
     Key = list_to_binary(test_utils:unique_string()),
     Value = list_to_binary(test_utils:unique_string()),
+
     ok = kvdbc:put(cached, <<"test_bucket">>, Key, Value),
+    1 = metrics_mock:get_metric(<<"riakc.riakc_default.put">>),
+
     {ok, Value} = kvdbc:get(cached, <<"test_bucket">>, Key),
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
+    1 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
+
+    {ok, Value} = kvdbc:get(cached, <<"test_bucket">>, Key),
+    0 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
+    2 = metrics_mock:get_metric(<<"riakc.riakc_default.get_cached">>),
+
     ok = kvdbc:delete(cached, <<"test_bucket">>, Key),
+    1 = metrics_mock:get_metric(<<"riakc.riakc_default.delete">>),
+
     {error, notfound} = kvdbc:get(cached, <<"test_bucket">>, Key),
+    1 = metrics_mock:get_metric(<<"riakc.riakc_default.get">>),
+
     ok = application:stop(kvdbc),
     application:unload(kvdbc).
