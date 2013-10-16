@@ -25,36 +25,24 @@
 
 start_link(BackendName, ProcessName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
-    ?HANDLER_MODULE:start_link(ProcessName, Config).
+    riakc_cluster:start_link(ProcessName, Config).
 
 -spec put(_BackendName :: term(), ProcessName :: process_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
 put(_BackendName, ProcessName, Table, Key, Value) ->
-    kvdbc_handler_call(put, [ProcessName, Table, Key, Value, [{w, 2}]]).
+    riakc_cluster:put(ProcessName, Table, Key, Value, [{w, 2}]).
 
 -spec get(_BackendName :: term(), ProcessName :: process_name(), Table :: table(), Key :: key()) -> error() | {'ok', value()}.
 get(_BackendName, ProcessName, Table, Key) -> 
-    kvdbc_handler_call(get, [ProcessName, Table, Key, [{r, 2}]]).
+    riakc_cluster:get(ProcessName, Table, Key, [{r, 2}]).
 
 -spec delete(_BackendName :: term(), ProcessName :: process_name(), Table :: table(), Key :: key()) -> error() | 'ok'.
 delete(_BackendName, ProcessName, Table, Key) ->
-    kvdbc_handler_call(delete, [ProcessName, Table, Key, [{rw, 2}]]).
+    riakc_cluster:delete(ProcessName, Table, Key, [{rw, 2}]).
 
 -spec list_keys(_BackendName :: term(), ProcessName :: process_name(), Table :: table()) -> error() | {'ok', [key()]}.
 list_keys(_BackendName, ProcessName, Table) ->
-    kvdbc_handler_call(list_keys, [ProcessName, Table]).
+    riakc_cluster:list_keys(ProcessName, Table).
 
 -spec list_buckets(_BackendName :: term(), ProcessName :: process_name()) -> error() | {'ok', [table()]}.
 list_buckets(_BackendName, ProcessName) ->
-    kvdbc_handler_call(list_buckets, [ProcessName]).
-
-% private functions
-
-kvdbc_handler_call(Func, Args) ->
-    case erlang:apply(?HANDLER_MODULE, Func, Args) of
-        {error, notfound} ->
-            {error, notfound};
-        {error, Reason} ->
-            {error, {riak, Reason}};
-        Any ->
-            Any
-    end.
+    riakc_cluster:list_buckets(ProcessName).
