@@ -15,12 +15,18 @@
     list_keys/3
 ]).
 
+-include_lib("riakc_cluster/include/riakc_cluster_types.hrl").
+
+-type mcdkey() :: {atom(), cluster_name(), table(), key()}.
+-type mcd_answer() :: {'error', term()} | {'ok', term()}.
+
 -define(CACHE_KEY_EXPIRATION, 2*60). % 2 min
 
 start_link(BackendName, ProcessName) ->
     Mod = module_name(BackendName),
     Mod:start_link(BackendName, ProcessName).
 
+-spec put(BackendName :: atom(), ProcessName :: cluster_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
 put(BackendName, ProcessName, Table, Key, Value) ->
     count(ProcessName, put),
     Mod = module_name(BackendName),
@@ -34,6 +40,7 @@ put(BackendName, ProcessName, Table, Key, Value) ->
     end,
     PutResponse.
 
+-spec get(BackendName :: atom(), ProcessName :: cluster_name(), Table :: table(), Key :: key()) -> error() | {'ok', value()}.
 get(BackendName, ProcessName, Table, Key) -> 
     MCDKey = mcd_key(ProcessName, Table, Key),
     case get_cached_value(BackendName, MCDKey) of
@@ -51,6 +58,7 @@ get(BackendName, ProcessName, Table, Key) ->
             GetResponse
     end.
 
+-spec delete(BackendName :: atom(), ProcessName :: cluster_name(), Table :: table(), Key :: key()) -> error() | 'ok'.
 delete(BackendName, ProcessName, Table, Key) ->
     count(ProcessName, delete),
     Mod = module_name(BackendName),
@@ -61,10 +69,12 @@ delete(BackendName, ProcessName, Table, Key) ->
     end,
     DelResponse.  %% We return result of riak del opration in any case
 
+-spec list_keys(BackendName :: atom(), ProcessName :: cluster_name(), Table :: table()) -> error() | {'ok', [key()]}.
 list_keys(BackendName, ProcessName, Table) ->
     Mod = module_name(BackendName),
     Mod:list_keys(BackendName, ProcessName, Table).
 
+-spec list_buckets(BackendName :: atom(), ProcessName :: cluster_name()) -> error() | {'ok', [table()]}.
 list_buckets(BackendName, ProcessName) ->
     Mod = module_name(BackendName),
     Mod:list_buckets(BackendName, ProcessName).
@@ -73,28 +83,34 @@ list_buckets(BackendName, ProcessName) ->
 % Internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+-spec module_name(BackendName :: atom()) -> atom().
 module_name(BackendName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
     proplists:get_value(wrapped_backend_module, Config).
 
+-spec cache_module(BackendName :: atom()) -> atom().
 cache_module(BackendName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
     proplists:get_value(cache_module, Config).
 
+-spec mcd_key(ProcName :: cluster_name(), Table :: table(), Key :: key()) -> mcdkey().
 mcd_key(ProcName, Table, Key) ->
     {?MODULE, ProcName, Table, Key}.
 
+-spec get_cached_value(BackendName :: atom(), MCDKey :: mcdkey()) -> mcd_answer().
 get_cached_value(BackendName, MCDKey) ->
     {Mod, ServerRef} = cache_module(BackendName),
-    Mod:do(ServerRef, get, MCDKey).
+    Mod:get(ServerRef, MCDKey).
 
+-spec set_cached_value(BackendName :: atom(), MCDKey :: mcdkey(), Value :: value()) -> mcd_answer().
 set_cached_value(BackendName, MCDKey, Value) ->
     {Mod, ServerRef} = cache_module(BackendName),
-    Mod:do(ServerRef, {set, 0, ?CACHE_KEY_EXPIRATION}, MCDKey, Value).
+    Mod:set(ServerRef, MCDKey, Value, ?CACHE_KEY_EXPIRATION).
 
+-spec delete_cached_value(BackendName :: atom(), MCDKey :: mcdkey()) -> mcd_answer().
 delete_cached_value(BackendName, MCDKey) ->
     {Mod, ServerRef} = cache_module(BackendName),
-    Mod:do(ServerRef, delete, MCDKey).
+    Mod:delete(ServerRef, MCDKey).
 
 count(ProcessName, Op) ->
     case kvdbc_cfg:metrics_module() of

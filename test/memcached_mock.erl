@@ -1,13 +1,15 @@
+%%% vim: set ts=4 sts=4 sw=4 et:
 -module(memcached_mock).
 -export([
-	do/3,
-	do/4
+    get/2,
+    delete/2,
+    set/4
 ]).
 
-do(_, get, Key) ->
-	case get(Key) of
-		undefined -> {error, notfound};
-		V -> {ok, V}
-	end;
-do(_, delete, Key) -> erase(Key).
-do(_, {set, _, _}, Key, Val) -> put(Key, Val).
+get(_, Key) ->
+    case get(Key) of
+        undefined -> {error, notfound};
+        V -> {ok, V}
+    end.
+delete(_, Key) -> erase(Key).
+set(_, Key, Val, _) -> put(Key, Val).
