@@ -88,7 +88,7 @@ module_name(BackendName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
     proplists:get_value(wrapped_backend_module, Config).
 
--spec cache_module(BackendName :: atom()) -> atom().
+-spec cache_module(BackendName :: atom()) -> {atom(), atom()}.
 cache_module(BackendName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),
     proplists:get_value(cache_module, Config).
