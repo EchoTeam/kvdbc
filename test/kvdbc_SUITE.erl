@@ -93,7 +93,7 @@ backend_cached_test(_Config) ->
     ok = application:start(kvdbc),
 
     Counter = fun(Name) ->
-        {<<".">>, list_to_binary("riakc.riakc_default." ++ Name), $r}
+        "kvdbc.kvdbc_cached_backend.riakc_default." ++ Name
     end,
 
     0 = metrics_mock:get_metric(Counter("get")),
