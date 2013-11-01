@@ -18,7 +18,16 @@
         list_keys/2
     ]).
 
+-export_type([
+    errors/0,
+    table/0,
+    key/0,
+    value/0
+]).
+
 -define(DEFAULT_BACKEND_INSTANCE, default).
+
+-include_lib("riakc_cluster/include/riakc_cluster_types.hrl").
 
 -spec put(Table::binary(), Key::term(), Value::term()) ->
     ok | {error, term()}.
