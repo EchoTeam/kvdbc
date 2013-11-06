@@ -90,12 +90,12 @@ list_buckets(InstanceName, ProcessName) ->
 
 -spec module_name(InstanceName :: instance_name()) -> atom().
 module_name(InstanceName) ->
-    Config = kvdbc_cfg:instance_val(InstanceName, config),
+    Config = kvdbc_cfg:backend_val(InstanceName, config),
     proplists:get_value(wrapped_backend_module, Config).
 
 -spec cache_module(InstanceName :: instance_name()) -> {atom(), atom()}.
 cache_module(InstanceName) ->
-    Config = kvdbc_cfg:instance_val(InstanceName, config),
+    Config = kvdbc_cfg:backend_val(InstanceName, config),
     proplists:get_value(cache_module, Config).
 
 -spec mcd_key(ProcName :: process_name(), Table :: table(), Key :: key()) -> mcdkey().

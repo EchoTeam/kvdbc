@@ -93,8 +93,8 @@ list_buckets(InstanceName) ->
 
 -spec process_name(InstanceName :: instance_name()) -> process_name().
 process_name(InstanceName) ->
-    kvdbc_cfg:instance_val(InstanceName, process_name).
+    kvdbc_cfg:backend_val(InstanceName, process_name).
 
 -spec module_name(InstanceName :: instance_name()) -> atom().
 module_name(InstanceName) ->
-    kvdbc_cfg:instance_val(InstanceName, callback_module).
+    kvdbc_cfg:backend_val(InstanceName, callback_module).

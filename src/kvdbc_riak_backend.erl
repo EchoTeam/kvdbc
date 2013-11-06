@@ -31,7 +31,7 @@
 -type instance_name() :: kvdbc:instance_name().
 
 start_link(InstanceName, ProcessName) ->
-    Config = kvdbc_cfg:instance_val(InstanceName, config),
+    Config = kvdbc_cfg:backend_val(InstanceName, config),
     riakc_cluster:start_link(ProcessName, Config).
 
 -spec put(_InstanceName :: instance_name(), ProcessName :: process_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
