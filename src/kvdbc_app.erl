@@ -24,20 +24,25 @@ load_config() ->
     mod_gen:go(Spec).
 
 config_mod_spec(Config) ->
-    BInstances = proplists:get_value(backend_instances, Config),
+    Instances = proplists:get_value(backend_instances, Config),
     MetricsModule = proplists:get_value(metrics_module, Config),
     BVals = lists:umerge([
         [
-            lists:flatten(io_lib:format("backend_val(~s, ~s) -> ~p", [I, K, V]))
+            lists:flatten(io_lib:format("instance_val(~s, ~s) -> ~p", [I, K, V]))
             || {K, V} <- Opts
         ]
-        || {I, Opts} <- BInstances
+        || {I, Opts} <- Instances
     ]),
     [
         ["-module(kvdbc_cfg).\n"],
-        ["-export([metrics_module/0, backends/0, backend_val/2]).\n"],
+        ["-export([metrics_module/0, instances/0, instance_val/2]).\n"],
+        % <BC>
+        ["-export([backends/0, backend_val/2]).\n"],
+        ["backends() -> instances().\n"],
+        ["backend_val(InstanceName, Key) -> instance_val(InstanceName, Key).\n"],
+        % </BC>
         ["metrics_module() -> ", io_lib:format("~p", [MetricsModule]), ".\n"],
-        ["backends() -> ", io_lib:format("~p", [BInstances]), ".\n"],
+        ["instances() -> ", io_lib:format("~p", [Instances]), ".\n"],
         [string:join(BVals, ";\n"), "."]
     ].
 
@@ -75,15 +80,18 @@ config_mod_spec_test_() ->
             ResultSpec = config_mod_spec(Config),
             ExpectedSpec = [
                 "-module(kvdbc_cfg).\n"
-                "-export([metrics_module/0, backends/0, backend_val/2]).\n"
+                "-export([metrics_module/0, instances/0, instance_val/2]).\n"
+                "-export([backends/0, backend_val/2]).\n"
+                "backends() -> instances().\n"
+                "backend_val(InstanceName, Key) -> instance_val(InstanceName, Key).\n"
                 "metrics_module() -> folsom_metrics.\n",
-                "backends() -> ", io_lib:format("~p", [Instances]), ".\n",
-                "backend_val(instance1, callback_module) -> module1;\n"
-                "backend_val(instance1, process_name) -> process1;\n"
-                "backend_val(instance1, config) -> [{k1,v1}];\n"
-                "backend_val(instance2, callback_module) -> module2;\n"
-                "backend_val(instance2, process_name) -> process2;\n"
-                "backend_val(instance2, config) -> [{k2,v2}]."
+                "instances() -> ", io_lib:format("~p", [Instances]), ".\n",
+                "instance_val(instance1, callback_module) -> module1;\n"
+                "instance_val(instance1, process_name) -> process1;\n"
+                "instance_val(instance1, config) -> [{k1,v1}];\n"
+                "instance_val(instance2, callback_module) -> module2;\n"
+                "instance_val(instance2, process_name) -> process2;\n"
+                "instance_val(instance2, config) -> [{k2,v2}]."
             ],
 
             ?debugFmt("ExpectedSpec:~n~s", [ExpectedSpec]),
@@ -94,7 +102,7 @@ config_mod_spec_test_() ->
             ?assertEqual({module, kvdbc_cfg},
                 mod_gen:go(ResultSpec)),
             ?assertEqual(module1,
-                kvdbc_cfg:backend_val(instance1, callback_module))
+                kvdbc_cfg:instance_val(instance1, callback_module))
         end
     ].
 

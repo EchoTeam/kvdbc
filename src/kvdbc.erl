@@ -20,6 +20,9 @@
 
 -export_type([
     errors/0,
+    error/0,
+    process_name/0,
+    instance_name/0,
     table/0,
     key/0,
     value/0
@@ -27,74 +30,71 @@
 
 -define(DEFAULT_BACKEND_INSTANCE, default).
 
+-type errors() :: kvdbc_riak_backend:errors().
+-type error() :: kvdbc_riak_backend:error().
+-type process_name() :: kvdbc_riak_backend:process_name().
+-type instance_name() :: atom().
 -type table() :: binary().
 -type key() :: binary().
 -type value() :: term().
--type errors() :: kvdbc_riak_backend:errors().
 
--spec put(Table::binary(), Key::term(), Value::term()) ->
-    ok | {error, term()}.
+-spec put(Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
 put(Table, Key, Value) ->
     put(?DEFAULT_BACKEND_INSTANCE, Table, Key, Value).
 
--spec put(BackendName::atom(), Table::binary(), Key::term(), Value::term()) ->
-    ok | {error, term()}.
-put(BackendName, Table, Key, Value) ->
-    ProcessName = process_name(BackendName),
-    Mod = module_name(BackendName),
-    Mod:put(BackendName, ProcessName, Table, Key, Value).
+-spec put(InstanceName :: instance_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
+put(InstanceName, Table, Key, Value) ->
+    ProcessName = process_name(InstanceName),
+    Mod = module_name(InstanceName),
+    Mod:put(InstanceName, ProcessName, Table, Key, Value).
 
--spec get(Table::binary(), Key::term()) ->
-    {ok, term()} | {error, term()}.
+-spec get(Table :: table(), Key :: key()) -> error() | {'ok', value()}.
 get(Table, Key) ->
     get(?DEFAULT_BACKEND_INSTANCE, Table, Key).
 
--spec get(BackendName::atom(), Table::binary(), Key::term()) ->
-    {ok, term()} | {error, term()}.
-get(BackendName, Table, Key) -> 
-    ProcessName = process_name(BackendName),
-    Mod = module_name(BackendName),
-    Mod:get(BackendName, ProcessName, Table, Key).
+-spec get(InstanceName :: instance_name(), Table :: table(), Key :: key()) -> error() | {'ok', value()}.
+get(InstanceName, Table, Key) ->
+    ProcessName = process_name(InstanceName),
+    Mod = module_name(InstanceName),
+    Mod:get(InstanceName, ProcessName, Table, Key).
 
--spec delete(Table::binary(), Key::term()) ->
-    ok | {error, term()}.
+-spec delete(Table :: table(), Key :: key()) -> error() | 'ok'.
 delete(Table, Key) ->
     delete(?DEFAULT_BACKEND_INSTANCE, Table, Key).
 
--spec delete(BackendName::atom(), Table::binary(), Key::term()) ->
-    ok | {error, term()}.
-delete(BackendName, Table, Key) ->
-    ProcessName = process_name(BackendName),
-    Mod = module_name(BackendName),
-    Mod:delete(BackendName, ProcessName, Table, Key).
+-spec delete(InstanceName :: instance_name(), Table :: table(), Key :: key()) -> error() | 'ok'.
+delete(InstanceName, Table, Key) ->
+    ProcessName = process_name(InstanceName),
+    Mod = module_name(InstanceName),
+    Mod:delete(InstanceName, ProcessName, Table, Key).
 
--spec list_keys(Table::binary()) -> {ok, [binary()]} | {error, term()}.
+-spec list_keys(Table :: table()) -> error() | {'ok', [key()]}.
 list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
 
--spec list_keys(BackendName::atom(), Table::binary()) ->
-    {ok, [binary()]} | {error, term()}.
-list_keys(BackendName, Table) ->
-    ProcessName = process_name(BackendName),
-    Mod = module_name(BackendName),
-    Mod:list_keys(BackendName, ProcessName, Table).
+-spec list_keys(InstanceName :: instance_name(), Table :: table()) -> error() | {'ok', [key()]}.
+list_keys(InstanceName, Table) ->
+    ProcessName = process_name(InstanceName),
+    Mod = module_name(InstanceName),
+    Mod:list_keys(InstanceName, ProcessName, Table).
 
--spec list_buckets() -> {ok, [binary()]} | {error, term()}.
+-spec list_buckets() -> error() | {'ok', [table()]}.
 list_buckets() ->
     list_buckets(?DEFAULT_BACKEND_INSTANCE).
 
--spec list_buckets(BackendName::atom()) ->
-    {ok, [binary()]} | {error, term()}.
-list_buckets(BackendName) ->
-    ProcessName = process_name(BackendName),
-    Mod = module_name(BackendName),
-    Mod:list_buckets(BackendName, ProcessName).
+-spec list_buckets(InstanceName :: instance_name()) -> error() | {'ok', [table()]}.
+list_buckets(InstanceName) ->
+    ProcessName = process_name(InstanceName),
+    Mod = module_name(InstanceName),
+    Mod:list_buckets(InstanceName, ProcessName).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-process_name(BackendName) ->
-    kvdbc_cfg:backend_val(BackendName, process_name).
+-spec process_name(InstanceName :: instance_name()) -> process_name().
+process_name(InstanceName) ->
+    kvdbc_cfg:instance_val(InstanceName, process_name).
 
-module_name(BackendName) ->
-    kvdbc_cfg:backend_val(BackendName, callback_module).
+-spec module_name(InstanceName :: instance_name()) -> atom().
+module_name(InstanceName) ->
+    kvdbc_cfg:instance_val(InstanceName, callback_module).

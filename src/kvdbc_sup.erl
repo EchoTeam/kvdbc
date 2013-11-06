@@ -23,16 +23,16 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    BInstances = kvdbc_cfg:backends(),
-    {ok, { {one_for_one, 5, 10}, backend_instance_specs(BInstances)} }.
+    Instances = kvdbc_cfg:instances(),
+    {ok, { {one_for_one, 5, 10}, instance_specs(Instances)} }.
 
-backend_instance_specs(BInstances) ->
+instance_specs(Instances) ->
     lists:map(fun({Name, Options}) ->
         [Module, ProcessName] = [proplists:get_value(K, Options) ||
             K <- [callback_module, process_name]],
         {ProcessName, { Module, start_link, [Name, ProcessName] },
             permanent, 10000, worker, [Module]}
-    end, BInstances).
+    end, Instances).
 
 
 
@@ -44,7 +44,7 @@ backend_instance_specs(BInstances) ->
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
-backend_instance_specs_test_() ->
+instance_specs_test_() ->
     [
         fun() ->
             Instances = [
@@ -63,7 +63,7 @@ backend_instance_specs_test_() ->
                 ]}
               ]}
             ],
-            Result = backend_instance_specs(Instances),
+            Result = instance_specs(Instances),
             Expected = [
                 {process1, {module1, start_link, [instance1, process1]},
                     permanent, 10000, worker, [module1]},
