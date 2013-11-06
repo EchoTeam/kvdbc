@@ -14,10 +14,18 @@
     list_buckets/2,
     list_keys/3
 ]).
-
--include_lib("riakc_cluster/include/riakc_cluster_types.hrl").
+-export_type([
+    errors/0
+]).
 
 -define(HANDLER_MODULE, 'riakc_cluster').
+
+-type cluster_name() :: ?HANDLER_MODULE:cluster_name().
+-type table() :: ?HANDLER_MODULE:table().
+-type key() :: ?HANDLER_MODULE:key().
+-type value() :: ?HANDLER_MODULE:value().
+-type error() :: ?HANDLER_MODULE:error().
+-type errors() :: ?HANDLER_MODULE:errors().
 
 start_link(BackendName, ProcessName) ->
     Config = kvdbc_cfg:backend_val(BackendName, config),

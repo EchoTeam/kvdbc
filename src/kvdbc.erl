@@ -27,7 +27,10 @@
 
 -define(DEFAULT_BACKEND_INSTANCE, default).
 
--include_lib("riakc_cluster/include/riakc_cluster_types.hrl").
+-type table() :: binary().
+-type key() :: binary().
+-type value() :: term().
+-type errors() :: kvdbc_riak_backend:errors().
 
 -spec put(Table::binary(), Key::term(), Value::term()) ->
     ok | {error, term()}.
