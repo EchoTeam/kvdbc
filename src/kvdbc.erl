@@ -20,7 +20,7 @@
 
 -ifdef(TEST).
 -export([
-    error_reason_to_string/1,
+    error_reason_to_string/1
 ]).
 -endif.
 
