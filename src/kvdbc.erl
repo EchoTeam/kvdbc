@@ -127,7 +127,7 @@ save_error_stats(Reason, InstanceName) ->
 error_reason_to_string(Reason) when is_atom(Reason) ->
     atom_to_list(Reason);
 error_reason_to_string(_Reason) ->
-    "general".
+    "unknown".
 
 safe_string(S) ->
     re:replace(S, "\\W", "_", [global, {return, list}]).
