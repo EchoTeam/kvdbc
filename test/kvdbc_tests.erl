@@ -11,7 +11,7 @@ error_reason_to_string_test() ->
     end || {Expectation, Reason} <- [
         {"timeout", timeout},
         {"undefined", undefined},
-        {"general", {a, b}}
+        {"unknown", {a, b}}
     ]].
 
 -endif.
