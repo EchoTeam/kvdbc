@@ -7,7 +7,7 @@
 -behaviour(kvdbc_backend).
 
 -export([
-    start_link/2,
+    start_link/1,
     get/4,
     put/5,
     delete/4,
@@ -28,28 +28,43 @@
 -type table() :: ?HANDLER_MODULE:table().
 -type key() :: ?HANDLER_MODULE:key().
 -type value() :: ?HANDLER_MODULE:value().
+-type opts() :: kvdbc:opts().
 -type instance_name() :: kvdbc:instance_name().
 
-start_link(InstanceName, ProcessName) ->
-    Config = kvdbc_cfg:backend_val(InstanceName, config),
+start_link(InstanceName) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
+    RiakConfig = kvdbc_cfg:config_val(InstanceName, riak_config),
+    Get = fun(K) -> proplists:get_value(K, RiakConfig) end,
+    SvcEp = Get('service-endpoint'),
+    SName = proplists:get_value(sname, SvcEp),
+    Port = proplists:get_value(port, SvcEp),
+    Config = [
+        {peers, [{list_to_atom(SName ++ "@" ++ H), {H, Port}}|| H <- Get(location)]},
+        {options, Get(config)}
+    ],
     riakc_cluster:start_link(ProcessName, Config).
 
--spec put(_InstanceName :: instance_name(), ProcessName :: process_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
-put(_InstanceName, ProcessName, Table, Key, Value) ->
+-spec put(instance_name(), table(), key(), value(), opts()) -> error() | 'ok'.
+put(InstanceName, Table, Key, Value, _Opts) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
     riakc_cluster:put(ProcessName, Table, Key, Value, [{w, 2}]).
 
--spec get(_InstanceName :: instance_name(), ProcessName :: process_name(), Table :: table(), Key :: key()) -> error() | {'ok', value()}.
-get(_InstanceName, ProcessName, Table, Key) ->
+-spec get(instance_name(), table(), key(), opts()) -> error() | {'ok', value()}.
+get(InstanceName, Table, Key, _Opts) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
     riakc_cluster:get(ProcessName, Table, Key, [{r, 2}]).
 
--spec delete(_InstanceName :: instance_name(), ProcessName :: process_name(), Table :: table(), Key :: key()) -> error() | 'ok'.
-delete(_InstanceName, ProcessName, Table, Key) ->
+-spec delete(instance_name(), table(), key(), opts()) -> error() | 'ok'.
+delete(InstanceName, Table, Key, _Opts) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
     riakc_cluster:delete(ProcessName, Table, Key, [{rw, 2}]).
 
--spec list_keys(_InstanceName :: instance_name(), ProcessName :: process_name(), Table :: table()) -> error() | {'ok', [key()]}.
-list_keys(_InstanceName, ProcessName, Table) ->
+-spec list_keys(instance_name(), table(), opts()) -> error() | {'ok', [key()]}.
+list_keys(InstanceName, Table, _Opts) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
     riakc_cluster:list_keys(ProcessName, Table).
 
--spec list_buckets(_InstanceName :: instance_name(), ProcessName :: process_name()) -> error() | {'ok', [table()]}.
-list_buckets(_InstanceName, ProcessName) ->
+-spec list_buckets(instance_name(), opts()) -> error() | {'ok', [table()]}.
+list_buckets(InstanceName, _Opts) ->
+    ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
     riakc_cluster:list_buckets(ProcessName).
