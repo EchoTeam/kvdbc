@@ -27,13 +27,21 @@ application_spec_default() ->
       {mod, { kvdbc_app, []}},
       {env, [
         {backend_instances, [
-          {default, [
+          [{default, [
             {callback_module, kvdbc_riak_backend},
-            {process_name, riakc_default},
             {config, [
-              {peers, [{'riak@localhost', {"localhost", 8087}}]}
+              {riak_config, [
+                {cluster, "localhost"},
+                {config, [{concurrency_level, 5}]},
+                {location, ["localhost"]},
+                {'service-endpoint', [
+                  {sname, "riak"},
+                  {port, 8087}]}
+              ]},
+              {process_name, riakc_default},
+              {riak_instance, items}
             ]}
-          ]}
+          ]}]
         ]}
       ]}
      ]}.
@@ -46,15 +54,28 @@ application_spec_cached() ->
       {env, [
         {metrics_module, metrics_mock},
         {backend_instances, [
-          {cached, [
-            {callback_module, kvdbc_cached_backend},
-            {process_name, riakc_default},
+          [{riak, [
+            {callback_module, kvdbc_riak_backend},
             {config, [
-              {cache_module, {memcached_mock, mb_riak_cache}},
-              {wrapped_backend_module, kvdbc_riak_backend},
-              {peers, [{'riak@localhost', {"localhost", 8087}}]}
+              {riak_config, [
+                {cluster, "localhost"},
+                {config, [{concurrency_level, 5}]},
+                {location, ["localhost"]},
+                {'service-endpoint', [
+                  {sname, "riak"},
+                  {port, 8087}]}
+              ]},
+              {process_name, riakc_default},
+              {riak_instance, items}
             ]}
-          ]}
+          ]}],
+          [{cached, [
+            {callback_module, kvdbc_cached_backend},
+            {config, [
+              {cache_serverref, mb_riak_cache},
+              {cache_module, memcached_mock},
+              {backend_instance, riak}]}
+          ]}]
         ]}
       ]}
      ]}.
@@ -72,11 +93,10 @@ backend_default_test(_Config) ->
     ok = application:start(kvdbc),
     Key = list_to_binary(test_utils:unique_string()),
     Value = list_to_binary(test_utils:unique_string()),
-    ok = kvdbc:put(<<"test_bucket">>, Key, Value),
-    {ok, Value} = kvdbc:get(<<"test_bucket">>, Key),
+    ok = kvdbc:put(default, <<"test_bucket">>, Key, Value),
     {ok, Value} = kvdbc:get(default, <<"test_bucket">>, Key),
-    ok = kvdbc:delete(<<"test_bucket">>, Key),
-    {error, notfound} = kvdbc:get(<<"test_bucket">>, Key),
+    ok = kvdbc:delete(default, <<"test_bucket">>, Key),
+    {error, notfound} = kvdbc:get(default, <<"test_bucket">>, Key),
     ok = application:stop(kvdbc),
     application:unload(kvdbc).
  
@@ -93,7 +113,7 @@ backend_cached_test(_Config) ->
     ok = application:start(kvdbc),
 
     Counter = fun(Name) ->
-        "kvdbc.kvdbc_cached_backend.riakc_default." ++ Name
+        "kvdbc.kvdbc_cached_backend.cached." ++ Name
     end,
 
     0 = metrics_mock:get_metric(Counter("get")),

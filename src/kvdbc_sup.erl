@@ -27,14 +27,14 @@ init([]) ->
     {ok, { {one_for_one, 5, 10}, instance_specs(Instances)} }.
 
 instance_specs(Instances) ->
-    lists:map(fun({Name, Options}) ->
-        [Module, ProcessName] = [proplists:get_value(K, Options) ||
-            K <- [callback_module, process_name]],
-        {ProcessName, { Module, start_link, [Name, ProcessName] },
-            permanent, 10000, worker, [Module]}
+    lists:map(fun([{Name, Options}]) ->
+        Module = proplists:get_value(callback_module, Options),
+        {sup_child_name(Name), { Module, start_link, [Name] },
+        permanent, 10000, worker, [Module]}
     end, Instances).
 
-
+sup_child_name(InstanceName) ->
+    list_to_atom("kvdbc_" ++ atom_to_list(InstanceName) ++ "_supchild_id").
 
 
 %% ===================================================================
@@ -48,26 +48,24 @@ instance_specs_test_() ->
     [
         fun() ->
             Instances = [
-              {instance1, [
+              [{instance1, [
                 {callback_module, module1},
-                {process_name, process1},
                 {config, [
                   {k1, v1}
                 ]}
-              ]},
-              {instance2, [
+              ]}],
+              [{instance2, [
                 {callback_module, module2},
-                {process_name, process2},
                 {config, [
                   {k2, v2}
                 ]}
-              ]}
+              ]}]
             ],
             Result = instance_specs(Instances),
             Expected = [
-                {process1, {module1, start_link, [instance1, process1]},
+                {kvdbc_instance1_supchild_id, {module1, start_link, [instance1]},
                     permanent, 10000, worker, [module1]},
-                {process2, {module2, start_link, [instance2, process2]},
+                {kvdbc_instance2_supchild_id, {module2, start_link, [instance2]},
                     permanent, 10000, worker, [module2]}
             ],
             ?assertEqual(Expected, Result)

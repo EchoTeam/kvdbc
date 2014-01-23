@@ -6,16 +6,16 @@
 -module(kvdbc).
 
 -export([
-        get/2,
         get/3,
-        put/3,
+        get/4,
         put/4,
-        delete/2,
+        put/5,
         delete/3,
-        list_buckets/0,
+        delete/4,
         list_buckets/1,
-        list_keys/1,
-        list_keys/2
+        list_buckets/2,
+        list_keys/2,
+        list_keys/3
     ]).
 
 -ifdef(TEST).
@@ -27,74 +27,72 @@
 -export_type([
     errors/0,
     error/0,
-    process_name/0,
     instance_name/0,
     table/0,
     key/0,
-    value/0
+    value/0,
+    opts/0
 ]).
 
-
--define(DEFAULT_BACKEND_INSTANCE, default).
 
 -type kvdbc_errors() :: 'service_is_not_available'.
 -type errors() :: kvdbc_riak_backend:errors() | kvdbc_errors().
 -type error() :: kvdbc_riak_backend:error() | {'error', kvdbc_errors()}.
--type process_name() :: kvdbc_riak_backend:process_name().
 -type instance_name() :: atom().
 -type table() :: binary().
 -type key() :: binary().
 -type value() :: term().
+-type opts() :: term().
 
--spec put(Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
-put(Table, Key, Value) ->
-    put(?DEFAULT_BACKEND_INSTANCE, Table, Key, Value).
-
--spec put(InstanceName :: instance_name(), Table :: table(), Key :: key(), Value :: value()) -> error() | 'ok'.
+-spec put(instance_name(), table(), key(), value()) -> error() | 'ok'.
 put(InstanceName, Table, Key, Value) ->
-    call(put, InstanceName, [Table, Key, Value]).
+    put(InstanceName, Table, Key, Value, []).
 
--spec get(Table :: table(), Key :: key()) -> error() | {'ok', value()}.
-get(Table, Key) ->
-    get(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+-spec put(instance_name(), table(), key(), value(), opts()) -> error() | 'ok'.
+put(InstanceName, Table, Key, Value, Opts) ->
+    call(put, InstanceName, [Table, Key, Value, Opts]).
 
--spec get(InstanceName :: instance_name(), Table :: table(), Key :: key()) -> error() | {'ok', value()}.
+-spec get(instance_name(), table(), key()) -> error() | {'ok', value()}.
 get(InstanceName, Table, Key) ->
-    call(get, InstanceName, [Table, Key]).
+    get(InstanceName, Table, Key, []).
 
--spec delete(Table :: table(), Key :: key()) -> error() | 'ok'.
-delete(Table, Key) ->
-    delete(?DEFAULT_BACKEND_INSTANCE, Table, Key).
+-spec get(instance_name(), table(), key(), opts()) -> error() | {'ok', value()}.
+get(InstanceName, Table, Key, Opts) ->
+    call(get, InstanceName, [Table, Key, Opts]).
 
--spec delete(InstanceName :: instance_name(), Table :: table(), Key :: key()) -> error() | 'ok'.
+-spec delete(instance_name(), table(), key()) -> error() | 'ok'.
 delete(InstanceName, Table, Key) ->
-    call(delete, InstanceName, [Table, Key]).
+    delete(InstanceName, Table, Key, []).
 
--spec list_keys(Table :: table()) -> error() | {'ok', [key()]}.
-list_keys(Table) -> list_keys(?DEFAULT_BACKEND_INSTANCE, Table).
+-spec delete(instance_name(), table(), key(), opts()) -> error() | 'ok'.
+delete(InstanceName, Table, Key, Opts) ->
+    call(delete, InstanceName, [Table, Key, Opts]).
 
--spec list_keys(InstanceName :: instance_name(), Table :: table()) -> error() | {'ok', [key()]}.
+-spec list_keys(instance_name(), table()) -> error() | {'ok', [key()]}.
 list_keys(InstanceName, Table) ->
-    call(list_keys, InstanceName, [Table]).
+    list_keys(InstanceName, Table, []).
 
--spec list_buckets() -> error() | {'ok', [table()]}.
-list_buckets() ->
-    list_buckets(?DEFAULT_BACKEND_INSTANCE).
+-spec list_keys(instance_name(), table(), opts()) -> error() | {'ok', [key()]}.
+list_keys(InstanceName, Table, Opts) ->
+    call(list_keys, InstanceName, [Table, Opts]).
 
--spec list_buckets(InstanceName :: instance_name()) -> error() | {'ok', [table()]}.
+-spec list_buckets(instance_name()) -> error() | {'ok', [table()]}.
 list_buckets(InstanceName) ->
-    call(list_buckets, InstanceName, []).
+    call(list_buckets, InstanceName, [[]]).
+
+-spec list_buckets(instance_name(), opts()) -> error() | {'ok', [table()]}.
+list_buckets(InstanceName, Opts) ->
+    call(list_buckets, InstanceName, [Opts]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 call(Func, InstanceName, Args) ->
-    ProcessName = kvdbc_cfg:backend_val(InstanceName, process_name),
     Module = kvdbc_cfg:backend_val(InstanceName, callback_module),
-    case handler_call(Module, Func, [InstanceName, ProcessName | Args]) of
+    case handler_call(Module, Func, [InstanceName | Args]) of
         {error, _Reason} = Error ->
-            log_error(Error, Module, Func, InstanceName, ProcessName, Args),
+            log_error(Error, Module, Func, InstanceName, Args),
             Error;
         Any ->
             Any
@@ -108,11 +106,11 @@ handler_call(Module, Func, Args) ->
             {error, service_is_not_available}
     end.
 
-log_error({error, notfound}, _Module, _Func, _InstanceName, _ProcessName, _Args) -> nop;
-log_error({error, Reason} = Error, Module, Func, InstanceName, ProcessName, Args) ->
+log_error({error, notfound}, _Module, _Func, _InstanceName, _Args) -> nop;
+log_error({error, Reason} = Error, Module, Func, InstanceName, Args) ->
     save_error_stats(Reason, InstanceName),
-    LogFormat = "Module: ~p; Func: ~p; InstanceName: ~p; ProcessName: ~p; Args: ~p~nError:~n~p",
-    LogData = [Module, Func, InstanceName, ProcessName, Args, Error],
+    LogFormat = "Module: ~p; Func: ~p; InstanceName: ~p; Args: ~p~nError:~n~p",
+    LogData = [Module, Func, InstanceName, Args, Error],
     lager:error(LogFormat, LogData).
 
 save_error_stats(Reason, InstanceName) ->
