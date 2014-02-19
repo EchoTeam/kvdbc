@@ -1,14 +1,15 @@
 -module(kvdbc_backend).
--export([behaviour_info/1]).
 
-behaviour_info(callbacks) ->
-    [
-        {start_link, 2},
-        {get, 4},
-        {put, 5},
-        {delete, 4},
-        {list_buckets, 2},
-        {list_keys, 3}
-    ];
-behaviour_info(_) ->
-    undefined.
+-type error() :: {'error', term()}.
+-type process_name() :: atom().
+-type instance_name() :: atom().
+-type table() :: binary().
+-type key() :: binary().
+-type value() :: term().
+
+-callback start_link(instance_name(), process_name()) -> term().
+-callback get(instance_name(), process_name(), table(), key()) -> error() | {'ok', value()}.
+-callback put(instance_name(), process_name(), table(), key(), value()) -> error() | 'ok'.
+-callback delete(instance_name(), process_name(), table(), key()) -> error() | 'ok'.
+-callback list_keys(instance_name(), process_name(), Table :: table()) -> error() | {'ok', [key()]}.
+-callback list_buckets(instance_name(), process_name()) -> error() | {'ok', [table()]}.
