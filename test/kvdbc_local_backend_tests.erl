@@ -7,10 +7,10 @@
 all_test_() ->
     {setup,
         fun() ->
-            {ok, _} = call(start_link, [])
+            {ok, _} = call(start_link)
         end,
         fun(_) -> 
-            ok = call(stop, [])
+            ok = call(stop)
         end,
         [
             {"put", fun() ->
@@ -38,7 +38,10 @@ all_test_() ->
     
 % private functions
 
+call(Fun) ->
+    erlang:apply(kvdbc_local_backend, Fun, [instance]).
+
 call(Fun, Params) ->
-    erlang:apply(kvdbc_local_backend, Fun, [instance, process_name | Params]).
+    erlang:apply(kvdbc_local_backend, Fun, [instance | Params ++ [[]]]).
 
 -endif.

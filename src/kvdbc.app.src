@@ -9,32 +9,9 @@
                  ]},
   {mod, { kvdbc_app, []}},
   {env, [
-
     %% To enable metrics, set this to a module with
     %% an API conformant to the folsom_metrics module.
     %% If this config is missing, then no metrics are sent.
     %% {metrics_module, folsom_metrics},
-
-    {backend_instances, [
-      {default, [
-        {callback_module, kvdbc_riak_backend},
-        {process_name, riakc_default},
-        {config, [
-          {peers, [{'riak@localhost', {"localhost", 8087}}]}
-        ]}
-      ]}
-
-      %% Example of caching backend
-	  %% ,{cached, [
-	  %%   {callback_module, kvdbc_cached_backend},
-	  %%   {process_name, riakc_default},
-	  %%   {config, [
-	  %%     {cache_module, {memcached_mock, mb_riak_cache}},
-	  %%     {wrapped_backend_module, kvdbc_riak_backend},
-	  %%     {peers, [{'riak@localhost', {"localhost", 8087}}]}
-	  %%   ]}
-	  %% ]}
-    ]}
-
   ]}
  ]}.

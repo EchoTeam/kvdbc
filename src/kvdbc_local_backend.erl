@@ -5,13 +5,13 @@
 -behaviour(gen_server).
 
 -export([
-    start_link/2,
+    start_link/1,
     get/4,
     put/5,
     delete/4,
     list_buckets/2,
     list_keys/3,
-    stop/2
+    stop/1
 ]).
 
 -export([
@@ -23,26 +23,26 @@
     terminate/2
 ]).
 
-start_link(_InstanceName, ProcessName) ->
-    gen_server:start_link({local, ProcessName}, ?MODULE, [], []).
+start_link(InstanceName) ->
+    gen_server:start_link({local, InstanceName}, ?MODULE, [], []).
 
-stop(_InstanceName, ProcessName) ->
-    gen_server:call(ProcessName, {stop}).
+stop(InstanceName) ->
+    gen_server:call(InstanceName, {stop}).
 
-put(_InstanceName, ProcessName, Table, Key, Value) ->
-    gen_server:call(ProcessName, {put, Table, Key, Value}).
+put(InstanceName, Table, Key, Value, _Opts) ->
+    gen_server:call(InstanceName, {put, Table, Key, Value}).
 
-get(_InstanceName, ProcessName, Table, Key) ->
-    gen_server:call(ProcessName, {get, Table, Key}).
+get(InstanceName, Table, Key, _Opts) ->
+    gen_server:call(InstanceName, {get, Table, Key}).
 
-delete(_InstanceName, ProcessName, Table, Key) ->
-    gen_server:call(ProcessName, {delete, Table, Key}).
+delete(InstanceName, Table, Key, _Opts) ->
+    gen_server:call(InstanceName, {delete, Table, Key}).
 
-list_keys(_InstanceName, ProcessName, Table) ->
-    gen_server:call(ProcessName, {list_keys, Table}).
+list_keys(InstanceName, Table, _Opts) ->
+    gen_server:call(InstanceName, {list_keys, Table}).
 
-list_buckets(_InstanceName, ProcessName) ->
-    gen_server:call(ProcessName, {list_buckets}).
+list_buckets(InstanceName, _Opts) ->
+    gen_server:call(InstanceName, {list_buckets}).
 
 %%%% gen_server callbacks
 
