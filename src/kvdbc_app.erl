@@ -35,14 +35,14 @@ config_mod_spec(Config) ->
             lists:flatten(io_lib:format("instance_val(~s, ~s) -> ~p", [I, K, V]))
             || {K, V} <- Opts
         ]
-        || [{I, Opts}] <- Instances
+        || {I, Opts} <- Instances
     ]),
     CVals = lists:umerge([
         [
             lists:flatten(io_lib:format("config_val(~s, ~s) -> ~p", [I, C, W]))
             || {C, W} <- proplists:get_value(config, Opts) 
         ]
-        || [{I, Opts}] <- Instances
+        || {I, Opts} <- Instances
     ]),
     ModSpec = [
         ["-module(kvdbc_cfg).\n"],
@@ -73,20 +73,20 @@ config_mod_spec_test_() ->
             Config = [
               {metrics_module, folsom_metrics},
               {backend_instances, [
-                  [{instance1, [
+                  {instance1, [
                     {callback_module, module1},
                     {process_name, process1},
                     {config, [
                       {k1, v1}
                     ]}
-                  ]}],
-                  [{instance2, [
+                  ]},
+                  {instance2, [
                     {callback_module, module2},
                     {process_name, process2},
                     {config, [
                       {k2, v2}
                     ]}
-                  ]}]
+                  ]}
                 ]}
             ],
             Instances = proplists:get_value(backend_instances, Config),

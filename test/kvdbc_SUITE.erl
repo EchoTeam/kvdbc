@@ -27,7 +27,7 @@ application_spec_default() ->
       {mod, { kvdbc_app, []}},
       {env, [
         {backend_instances, [
-          [{default, [
+          {default, [
             {callback_module, kvdbc_riak_backend},
             {config, [
               {riak_config, [
@@ -41,7 +41,7 @@ application_spec_default() ->
               {process_name, riakc_default},
               {riak_instance, items}
             ]}
-          ]}]
+          ]}
         ]}
       ]}
      ]}.
@@ -54,7 +54,7 @@ application_spec_cached() ->
       {env, [
         {metrics_module, metrics_mock},
         {backend_instances, [
-          [{riak, [
+          {riak, [
             {callback_module, kvdbc_riak_backend},
             {config, [
               {riak_config, [
@@ -68,14 +68,14 @@ application_spec_cached() ->
               {process_name, riakc_default},
               {riak_instance, items}
             ]}
-          ]}],
-          [{cached, [
+          ]},
+          {cached, [
             {callback_module, kvdbc_cached_backend},
             {config, [
               {cache_serverref, mb_riak_cache},
               {cache_module, memcached_mock},
               {backend_instance, riak}]}
-          ]}]
+          ]}
         ]}
       ]}
      ]}.

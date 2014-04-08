@@ -27,7 +27,7 @@ init([]) ->
     {ok, { {one_for_one, 5, 10}, instance_specs(Instances)} }.
 
 instance_specs(Instances) ->
-    lists:map(fun([{Name, Options}]) ->
+    lists:map(fun({Name, Options}) ->
         Module = proplists:get_value(callback_module, Options),
         {sup_child_name(Name), { Module, start_link, [Name] },
         permanent, 10000, worker, [Module]}
@@ -48,18 +48,18 @@ instance_specs_test_() ->
     [
         fun() ->
             Instances = [
-              [{instance1, [
+              {instance1, [
                 {callback_module, module1},
                 {config, [
                   {k1, v1}
                 ]}
-              ]}],
-              [{instance2, [
+              ]},
+              {instance2, [
                 {callback_module, module2},
                 {config, [
                   {k2, v2}
                 ]}
-              ]}]
+              ]}
             ],
             Result = instance_specs(Instances),
             Expected = [
