@@ -30,16 +30,11 @@ application_spec_default() ->
           {default, [
             {callback_module, kvdbc_riak_backend},
             {config, [
-              {riak_config, [
-                {cluster, "localhost"},
-                {config, [{concurrency_level, 5}]},
-                {location, ["localhost"]},
-                {'service-endpoint', [
-                  {sname, "riak"},
-                  {port, 8087}]}
-              ]},
               {process_name, riakc_default},
-              {riak_instance, items}
+              {concurrency_level, 5},
+              {peers, ["localhost"]},
+              {server_sname, "riak"},
+              {server_port, 8087}
             ]}
           ]}
         ]}
@@ -57,16 +52,11 @@ application_spec_cached() ->
           {riak, [
             {callback_module, kvdbc_riak_backend},
             {config, [
-              {riak_config, [
-                {cluster, "localhost"},
-                {config, [{concurrency_level, 5}]},
-                {location, ["localhost"]},
-                {'service-endpoint', [
-                  {sname, "riak"},
-                  {port, 8087}]}
-              ]},
               {process_name, riakc_default},
-              {riak_instance, items}
+              {concurrency_level, 5},
+              {peers, ["localhost"]},
+              {server_sname, "riak"},
+              {server_port, 8087}
             ]}
           ]},
           {cached, [

@@ -30,14 +30,12 @@
 
 start_link(InstanceName) ->
     ProcessName = kvdbc_cfg:config_val(InstanceName, process_name),
-    RiakConfig = kvdbc_cfg:config_val(InstanceName, riak_config),
-    Get = fun(K) -> proplists:get_value(K, RiakConfig) end,
-    SvcEp = Get('service-endpoint'),
-    SName = proplists:get_value(sname, SvcEp),
-    Port = proplists:get_value(port, SvcEp),
+    Peers = kvdbc_cfg:config_val(InstanceName, peers),
+    SName = kvdbc_cfg:config_val(InstanceName, server_sname),
+    Port = kvdbc_cfg:config_val(InstanceName, server_port),
     Config = [
-        {peers, [{list_to_atom(SName ++ "@" ++ H), {H, Port}}|| H <- Get(location)]},
-        {options, Get(config)}
+        {peers, [{list_to_atom(SName ++ "@" ++ H), {H, Port}} || H <- Peers]},
+        {options, kvdbc_cfg:instance_val(InstanceName, config)}
     ],
     riakc_cluster:start_link(ProcessName, Config).
 
