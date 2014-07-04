@@ -6,6 +6,7 @@
 
 -export([
     start_link/1,
+    create_bucket/3,
     get/4,
     put/5,
     delete/4,
@@ -43,6 +44,9 @@ list_keys(InstanceName, Table, _Opts) ->
 
 list_buckets(InstanceName, _Opts) ->
     gen_server:call(InstanceName, {list_buckets}).
+
+create_bucket(_InstanceName, BucketName, _Opts) ->
+    {ok, BucketName}.
 
 %%%% gen_server callbacks
 

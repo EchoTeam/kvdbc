@@ -3,6 +3,7 @@
 -module(kvdbc).
 
 -export([
+        create_bucket/3,
         get/3,
         get/4,
         put/4,
@@ -40,6 +41,10 @@
 -type key() :: binary().
 -type value() :: term().
 -type opts() :: term().
+
+-spec create_bucket(instance_name(), table(), opts()) -> error() | {'ok', table()}.
+create_bucket(InstanceName, BucketName, Opts) ->
+    call(create_bucket, InstanceName, [BucketName, Opts]).
 
 -spec put(instance_name(), table(), key(), value()) -> error() | 'ok'.
 put(InstanceName, Table, Key, Value) ->

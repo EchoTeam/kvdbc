@@ -13,3 +13,4 @@
 -callback delete(instance_name(), table(), key(), opts()) -> error() | 'ok'.
 -callback list_keys(instance_name(), Table :: table(), opts()) -> error() | {'ok', [key()]}.
 -callback list_buckets(instance_name(), opts()) -> error() | {'ok', [table()]}.
+-callback create_bucket(instance_name(), table(), opts()) -> error() | {'ok', table()}.

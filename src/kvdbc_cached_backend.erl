@@ -5,6 +5,7 @@
 
 -export([
     start_link/1,
+    create_bucket/3,
     get/4,
     put/5,
     delete/4,
@@ -75,6 +76,10 @@ list_keys(InstanceName, Table, Opts) ->
 -spec list_buckets(instance_name(), opts()) -> error() | {'ok', [table()]}.
 list_buckets(InstanceName, Opts) ->
     call_backend(InstanceName, list_buckets, [Opts]).
+
+-spec create_bucket(instance_name(), table(), opts()) -> error() | {'ok', table()}.
+create_bucket(InstanceName, BucketName, Opts) ->
+    call_backend(InstanceName, create_bucket, [BucketName, Opts]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal functions
